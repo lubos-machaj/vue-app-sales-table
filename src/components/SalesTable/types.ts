@@ -4,5 +4,3 @@ export type DataType = {
   category: string
   store: string
 }
-
-export type Order = 'asc' | 'desc' | undefined

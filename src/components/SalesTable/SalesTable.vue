@@ -80,14 +80,14 @@
 
   // Sorting
   const sortedStore = ref('')
-  const sortedStoreOrder = ref('')
+  const sortedStoreOrder = ref<string | null>('')
 
   // Visibility
   const showTable = ref(false)
   const visibleCategories = ref<string[]>([])
 
   /**
-   * Group by product & store
+   * Group data by product & store
    */
   const groupData = (data: DataType[]): DataType[] => {
     return Object.values(
@@ -134,7 +134,7 @@
   }
 
   const getCategories = computed((): string[] => {
-    if (sortedStore.value) {
+    if (sortedStore.value && sortedStoreOrder.value) {
       return Object.entries(
         filteredData.value
           .filter((item) => item.store === sortedStore.value)
@@ -163,13 +163,25 @@
     )
   }
 
+  /**
+   * Sort by store & pieces
+   */
   const sortColumn = (store: string): void => {
     // reset sorting
-    if (sortedStore.value !== store) sortedStoreOrder.value = ''
+    if (sortedStore.value !== store) sortedStoreOrder.value = null
+
+    // set store
     sortedStore.value = store
+
+    // set next sorting order
     sortedStoreOrder.value =
-      sortedStoreOrder.value === OrderEnum.ASC ? OrderEnum.DESC : OrderEnum.ASC
-    // if not undefined, sort by order
+      sortedStoreOrder.value === OrderEnum.ASC
+        ? OrderEnum.DESC
+        : sortedStoreOrder.value === OrderEnum.DESC
+          ? null
+          : OrderEnum.ASC
+
+    // if not null, sort by order
     if (sortedStoreOrder.value) {
       const sortedStoreData = data.value
         .filter((item) => item.store === store)
@@ -189,7 +201,7 @@
   }
 
   const getIcon = (store: string): { icon: string; class: string } => {
-    return sortedStore.value === store
+    return sortedStore.value === store && sortedStoreOrder.value
       ? sortedStoreOrder.value === OrderEnum.ASC
         ? { icon: '↓', class: OrderEnum.ASC }
         : { icon: '↑', class: OrderEnum.DESC }
@@ -239,6 +251,20 @@
   th {
     background-color: #2a2a2a;
     font-weight: bold;
+    .icon {
+      width: 15px;
+      display: inline-block;
+      margin-left: 5px;
+      &.default {
+        opacity: 0.2;
+        transform: rotate(90deg);
+      }
+      &.acs,
+      &.decs {
+        opacity: 0.75;
+        font-size: 10px;
+      }
+    }
     &:hover {
       background-color: #595959;
       cursor: pointer;
@@ -281,19 +307,5 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-  }
-  .icon {
-    width: 15px;
-    display: inline-block;
-    margin-left: 5px;
-    &.default {
-      opacity: 0.2;
-      transform: rotate(90deg);
-    }
-    &.acs,
-    &.decs {
-      opacity: 0.75;
-      font-size: 10px;
-    }
   }
 </style>

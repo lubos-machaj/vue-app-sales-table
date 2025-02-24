@@ -5,4 +5,4 @@ export type DataType = {
   store: string
 }
 
-export type Order = 'asc' | 'desc'
+export type Order = 'asc' | 'desc' | undefined

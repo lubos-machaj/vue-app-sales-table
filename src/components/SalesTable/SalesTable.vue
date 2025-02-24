@@ -6,9 +6,17 @@
         <th
           v-for="store in stores"
           :key="store"
+          class="store-cell"
           @click="sortColumn(store)"
         >
-          {{ store }}
+          <p class="store-title">
+            {{ store }}
+            <span
+              class="icon"
+              :class="getIcon(store).class"
+              v-text="getIcon(store).icon"
+            />
+          </p>
         </th>
       </tr>
     </thead>
@@ -59,7 +67,7 @@
 <script setup lang="ts">
   import axios from 'axios'
   import { ref, onMounted, computed } from 'vue'
-  import type { DataType, Order } from './types'
+  import type { DataType } from './types'
   import { OrderEnum } from './enums'
 
   // Data
@@ -74,9 +82,8 @@
   const sortedStore = ref('')
   const sortedStoreOrder = ref('')
 
-  // Table visibility
+  // Visibility
   const showTable = ref(false)
-
   const visibleCategories = ref<string[]>([])
 
   /**
@@ -156,20 +163,37 @@
     )
   }
 
-  const sortColumn = (store: string, order: Order = OrderEnum.ASC): void => {
+  const sortColumn = (store: string): void => {
+    // reset sorting
+    if (sortedStore.value !== store) sortedStoreOrder.value = ''
     sortedStore.value = store
-    sortedStoreOrder.value = order
-    const sortedStoreData = data.value
-      .filter((item) => item.store === store)
-      .sort((a, b) => {
-        if (order === OrderEnum.ASC) {
-          return a.pcs - b.pcs
-        } else {
-          return b.pcs - a.pcs
-        }
-      })
-    const otherData = data.value.filter((item) => item.store !== store)
-    filteredData.value = [...sortedStoreData, ...otherData]
+    sortedStoreOrder.value =
+      sortedStoreOrder.value === OrderEnum.ASC ? OrderEnum.DESC : OrderEnum.ASC
+    // if not undefined, sort by order
+    if (sortedStoreOrder.value) {
+      const sortedStoreData = data.value
+        .filter((item) => item.store === store)
+        .sort((a, b) => {
+          if (sortedStoreOrder.value === OrderEnum.ASC) {
+            return a.pcs - b.pcs
+          } else {
+            return b.pcs - a.pcs
+          }
+        })
+      const otherData = data.value.filter((item) => item.store !== store)
+      filteredData.value = [...sortedStoreData, ...otherData]
+    } else {
+      // original order
+      filteredData.value = data.value
+    }
+  }
+
+  const getIcon = (store: string): { icon: string; class: string } => {
+    return sortedStore.value === store
+      ? sortedStoreOrder.value === OrderEnum.ASC
+        ? { icon: '↓', class: OrderEnum.ASC }
+        : { icon: '↑', class: OrderEnum.DESC }
+      : { icon: '↔', class: 'default' }
   }
 
   const toggleProducts = (category: string): void => {
@@ -249,5 +273,27 @@
   }
   .hidden {
     display: none;
+  }
+  .store-cell {
+    padding: 15px 20px 15px 30px;
+  }
+  .store-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .icon {
+    width: 15px;
+    display: inline-block;
+    margin-left: 5px;
+    &.default {
+      opacity: 0.2;
+      transform: rotate(90deg);
+    }
+    &.acs,
+    &.decs {
+      opacity: 0.75;
+      font-size: 10px;
+    }
   }
 </style>

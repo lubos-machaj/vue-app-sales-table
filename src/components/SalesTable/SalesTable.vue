@@ -1,5 +1,5 @@
 <template>
-  <table v-if="filteredData.length">
+  <table v-if="data.length && showTable">
     <thead>
       <tr>
         <th />
@@ -18,7 +18,14 @@
         :key="category"
       >
         <tr class="category">
-          <td>{{ category }}</td>
+          <td class="category-cell">
+            {{ category }}
+            <a
+              class="category-toggle"
+              @click.prevent="toggleProducts(category)"
+              >{{ isCategoryVisible(category) ? '-' : '+' }}</a
+            >
+          </td>
           <td
             v-for="store in stores"
             :key="store"
@@ -27,6 +34,8 @@
           </td>
         </tr>
         <tr
+          class="products"
+          :class="{ hidden: !isCategoryVisible(category) }"
           v-for="product in getProducts(category)"
           :key="`${category}-${product}`"
         >
@@ -41,27 +50,20 @@
       </template>
     </tbody>
   </table>
+  <p
+    v-else
+    v-text="'Something went wrong with the data. Please try again.'"
+  />
 </template>
 
 <script setup lang="ts">
-  type DataType = {
-    product: string
-    pcs: number
-    category: string
-    store: string
-  }
-
-  type Order = 'asc' | 'desc'
-
-  enum OrderEnum {
-    ASC = 'asc',
-    DESC = 'desc',
-  }
-
+  import axios from 'axios'
   import { ref, onMounted, computed } from 'vue'
+  import type { DataType, Order } from './types'
+  import { OrderEnum } from './enums'
 
   // Data
-  const groupedData = ref<DataType[]>([])
+  const data = ref<DataType[]>([])
   const filteredData = ref<DataType[]>([])
 
   // Collections
@@ -71,6 +73,11 @@
   // Sorting
   const sortedStore = ref('')
   const sortedStoreOrder = ref('')
+
+  // Table visibility
+  const showTable = ref(false)
+
+  const visibleCategories = ref<string[]>([])
 
   /**
    * Group by product & store
@@ -92,8 +99,14 @@
     )
   }
 
-  const extractUniqueValues = (data: DataType[], key: keyof DataType): string[] => {
-    return [...new Set(data.map((item) => item[key]))] as string[]
+  const extractUniqueValues = (
+    data: DataType[],
+    key: keyof DataType,
+    sorting = false,
+  ): string[] => {
+    const setCollection = [...new Set(data.map((item) => item[key]))] as string[]
+    if (sorting) setCollection.sort()
+    return setCollection
   }
 
   const getPiecesByCategory = (category: string, store: string): number => {
@@ -146,7 +159,7 @@
   const sortColumn = (store: string, order: Order = OrderEnum.ASC): void => {
     sortedStore.value = store
     sortedStoreOrder.value = order
-    const sortedStoreData = groupedData.value
+    const sortedStoreData = data.value
       .filter((item) => item.store === store)
       .sort((a, b) => {
         if (order === OrderEnum.ASC) {
@@ -155,18 +168,29 @@
           return b.pcs - a.pcs
         }
       })
-    const otherData = groupedData.value.filter((item) => item.store !== store)
+    const otherData = data.value.filter((item) => item.store !== store)
     filteredData.value = [...sortedStoreData, ...otherData]
   }
 
+  const toggleProducts = (category: string): void => {
+    visibleCategories.value = visibleCategories.value.find((item) => item === category)
+      ? visibleCategories.value.filter((item) => item !== category)
+      : [...visibleCategories.value, category]
+  }
+
+  const isCategoryVisible = (category: string): boolean => {
+    return visibleCategories.value.includes(category)
+  }
+
   onMounted(() => {
-    fetch('./data/fe-data.json')
-      .then((response) => response.json())
-      .then((data) => {
-        groupedData.value = groupData(data)
-        filteredData.value = groupedData.value
-        categories.value = extractUniqueValues(data, 'category')
-        stores.value = extractUniqueValues(data, 'store')
+    axios
+      .get('./data/fe-data.json')
+      .then((response) => {
+        data.value = groupData(response.data)
+        filteredData.value = data.value
+        categories.value = extractUniqueValues(data.value, 'category', true)
+        stores.value = extractUniqueValues(data.value, 'store', true)
+        showTable.value = true
       })
       .catch((error) => {
         console.error('Error:', error)
@@ -201,5 +225,29 @@
     background-color: #3a3a3a;
     font-weight: bold;
     text-transform: uppercase;
+  }
+  .category-cell {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .category-toggle {
+    width: 20px;
+    height: 20px;
+    text-align: center;
+    color: #fff;
+    text-decoration: none;
+    padding: 5px;
+    border-radius: 10%;
+    border: 1px solid #8a8a8a;
+    background-color: #595959;
+    cursor: pointer;
+    margin-left: 15px;
+    &:hover {
+      background-color: #696969;
+    }
+  }
+  .hidden {
+    display: none;
   }
 </style>

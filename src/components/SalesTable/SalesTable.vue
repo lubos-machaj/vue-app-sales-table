@@ -6,15 +6,14 @@
         <th
           v-for="store in stores"
           :key="store"
-          class="store-cell"
+          class="store-column"
           @click="sortColumn(store)"
         >
-          <p class="store-title">
+          <p class="store-name">
             {{ store }}
             <span
-              class="icon"
-              :class="getIcon(store).class"
-              v-text="getIcon(store).icon"
+              class="store-sorting-icon"
+              :class="sortedStore === store && sortedStoreOrder"
             />
           </p>
         </th>
@@ -25,14 +24,14 @@
         v-for="category in getCategories"
         :key="category"
       >
-        <tr class="category">
-          <td class="category-cell">
+        <tr class="category-row">
+          <td class="category-group">
             {{ category }}
             <a
               class="category-toggle"
+              :class="{ open: isCategoryVisible(category) }"
               @click.prevent="toggleProducts(category)"
-              >{{ isCategoryVisible(category) ? '-' : '+' }}</a
-            >
+            />
           </td>
           <td
             v-for="store in stores"
@@ -42,12 +41,15 @@
           </td>
         </tr>
         <tr
-          class="products"
+          class="product-row"
           :class="{ hidden: !isCategoryVisible(category) }"
           v-for="product in getProducts(category)"
           :key="`${category}-${product}`"
         >
-          <td>{{ product }}</td>
+          <td
+            class="product-item"
+            v-text="product"
+          />
           <td
             v-for="store in stores"
             :key="store"
@@ -200,13 +202,13 @@
     }
   }
 
-  const getIcon = (store: string): { icon: string; class: string } => {
-    return sortedStore.value === store && sortedStoreOrder.value
-      ? sortedStoreOrder.value === OrderEnum.ASC
-        ? { icon: '↓', class: OrderEnum.ASC }
-        : { icon: '↑', class: OrderEnum.DESC }
-      : { icon: '↔', class: 'default' }
-  }
+  // const getIcon = (store: string): string => {
+  //   return sortedStore.value === store && sortedStoreOrder.value
+  //     ? sortedStoreOrder.value === OrderEnum.ASC
+  //       ? '↓'
+  //       : '↑'
+  //     : '↔'
+  // }
 
   const toggleProducts = (category: string): void => {
     visibleCategories.value = visibleCategories.value.find((item) => item === category)
@@ -234,78 +236,4 @@
   })
 </script>
 
-<style scoped>
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-  }
-
-  th,
-  td {
-    border: 1px solid #ddd;
-    padding: 15px;
-    text-align: left;
-  }
-
-  th {
-    background-color: #2a2a2a;
-    font-weight: bold;
-    .icon {
-      width: 15px;
-      display: inline-block;
-      margin-left: 5px;
-      &.default {
-        opacity: 0.2;
-        transform: rotate(90deg);
-      }
-      &.acs,
-      &.decs {
-        opacity: 0.75;
-        font-size: 10px;
-      }
-    }
-    &:hover {
-      background-color: #595959;
-      cursor: pointer;
-    }
-  }
-
-  .category {
-    background-color: #3a3a3a;
-    font-weight: bold;
-    text-transform: uppercase;
-  }
-  .category-cell {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-  .category-toggle {
-    width: 20px;
-    height: 20px;
-    text-align: center;
-    color: #fff;
-    text-decoration: none;
-    padding: 5px;
-    border-radius: 10%;
-    border: 1px solid #8a8a8a;
-    background-color: #595959;
-    cursor: pointer;
-    margin-left: 15px;
-    &:hover {
-      background-color: #696969;
-    }
-  }
-  .hidden {
-    display: none;
-  }
-  .store-cell {
-    padding: 15px 20px 15px 30px;
-  }
-  .store-title {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-</style>
+<style scoped></style>

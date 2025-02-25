@@ -37,9 +37,8 @@ td {
   }
 }
 
-
 th {
-  background-color: #2a2a2a;
+  background-color: #4d4d4d;
 }
 
 .store-column {
@@ -126,6 +125,12 @@ th {
     &::after {
       content: '-';
     }
+  }
+}
+
+.product-row {
+  &:nth-child(2n) {
+    background-color: #181818;
   }
 }
 

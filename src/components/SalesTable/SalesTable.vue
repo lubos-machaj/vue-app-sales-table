@@ -1,5 +1,5 @@
 <template>
-  <table v-if="data.length && showTable">
+  <table v-if="filteredData.length && showTable">
     <thead>
       <tr>
         <th />
@@ -61,16 +61,18 @@
     </tbody>
   </table>
   <p
-    v-else
+    v-if="!filteredData.length"
+    class="error-message"
     v-text="'Something went wrong with the data. Please try again.'"
   />
 </template>
 
 <script setup lang="ts">
+  import { ref, onBeforeMount, computed, defineEmits } from 'vue'
   import axios from 'axios'
-  import { ref, onMounted, computed } from 'vue'
-  import type { DataType } from './types'
-  import { OrderEnum } from './enums'
+  import type { DataType } from '@/types'
+  import { OrderEnum } from '@/enums'
+  import { extractUniqueValues } from '@/utils'
 
   // Data
   const data = ref<DataType[]>([])
@@ -87,6 +89,9 @@
   // Visibility
   const showTable = ref(false)
   const visibleCategories = ref<string[]>([])
+
+  // Emit
+  const emit = defineEmits(['loader'])
 
   /**
    * Group data by product & store
@@ -108,16 +113,6 @@
     )
   }
 
-  const extractUniqueValues = (
-    data: DataType[],
-    key: keyof DataType,
-    sorting = false,
-  ): string[] => {
-    const setCollection = [...new Set(data.map((item) => item[key]))] as string[]
-    if (sorting) setCollection.sort()
-    return setCollection
-  }
-
   const getPiecesByCategory = (category: string, store: string): number => {
     return (
       filteredData.value.reduce((acc, curr) => {
@@ -136,23 +131,18 @@
   }
 
   const getCategories = computed((): string[] => {
+    // sorting by store & pieces
     if (sortedStore.value && sortedStoreOrder.value) {
-      return Object.entries(
-        filteredData.value
-          .filter((item) => item.store === sortedStore.value)
-          .reduce((acc: { [key: string]: number }, item) => {
-            acc[item.category] = (acc[item.category] || 0) + item.pcs
-            return acc
-          }, {}),
-      )
-        .sort((a, b) => {
-          if (sortedStoreOrder.value === OrderEnum.ASC) {
-            return a[1] - b[1]
-          } else {
-            return b[1] - a[1]
-          }
-        })
-        .map((item) => item[0])
+      const categoryPieces = filteredData.value
+        .filter((item) => item.store === sortedStore.value)
+        .reduce((acc: Record<string, number>, item) => {
+          acc[item.category] = (acc[item.category] || 0) + item.pcs
+          return acc
+        }, {})
+
+      return Object.entries(categoryPieces)
+        .sort(([, a], [, b]) => (sortedStoreOrder.value === OrderEnum.ASC ? a - b : b - a))
+        .map(([category]) => category)
     } else {
       return categories.value
     }
@@ -188,11 +178,7 @@
       const sortedStoreData = data.value
         .filter((item) => item.store === store)
         .sort((a, b) => {
-          if (sortedStoreOrder.value === OrderEnum.ASC) {
-            return a.pcs - b.pcs
-          } else {
-            return b.pcs - a.pcs
-          }
+          return sortedStoreOrder.value === OrderEnum.ASC ? a.pcs - b.pcs : b.pcs - a.pcs
         })
       const otherData = data.value.filter((item) => item.store !== store)
       filteredData.value = [...sortedStoreData, ...otherData]
@@ -201,14 +187,6 @@
       filteredData.value = data.value
     }
   }
-
-  // const getIcon = (store: string): string => {
-  //   return sortedStore.value === store && sortedStoreOrder.value
-  //     ? sortedStoreOrder.value === OrderEnum.ASC
-  //       ? '↓'
-  //       : '↑'
-  //     : '↔'
-  // }
 
   const toggleProducts = (category: string): void => {
     visibleCategories.value = visibleCategories.value.find((item) => item === category)
@@ -220,20 +198,20 @@
     return visibleCategories.value.includes(category)
   }
 
-  onMounted(() => {
-    axios
-      .get('./data/fe-data.json')
-      .then((response) => {
-        data.value = groupData(response.data)
-        filteredData.value = data.value
-        categories.value = extractUniqueValues(data.value, 'category', true)
-        stores.value = extractUniqueValues(data.value, 'store', true)
-        showTable.value = true
-      })
-      .catch((error) => {
-        console.error('Error:', error)
-      })
-  })
-</script>
+  // @TODO - fetch data from API
+  const fetchData = async () => {
+    try {
+      const response = await axios.get('./data/fe-data.json')
+      data.value = groupData(response.data)
+      filteredData.value = data.value
+      categories.value = extractUniqueValues(data.value, 'category', true)
+      stores.value = extractUniqueValues(data.value, 'store', true)
+      showTable.value = true
+      emit('loader', false)
+    } catch (error) {
+      console.error('Error:', error)
+    }
+  }
 
-<style scoped></style>
+  onBeforeMount(fetchData)
+</script>

@@ -9,7 +9,7 @@ html {
   background-color: #242424;
 }
 
-#app {
+main {
   max-width: 1280px;
   margin: 0 auto;
   padding: 2rem;
@@ -143,4 +143,7 @@ th {
   display: none;
 }
 
+.error-message {
+  text-align: center;
+}
 

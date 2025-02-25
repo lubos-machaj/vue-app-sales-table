@@ -4,39 +4,23 @@
       v-for="category in getCategories"
       :key="category"
     >
-      <tr class="category-row">
-        <td class="category-group">
-          {{ category }}
-          <a
-            class="category-toggle"
-            :class="{ open: isCategoryVisible(category) }"
-            @click.prevent="toggleProducts(category)"
-          />
-        </td>
-        <td
-          v-for="store in props.stores"
-          :key="store"
-        >
-          {{ getPiecesByCategory(category, store) }}
-        </td>
-      </tr>
-      <tr
-        class="product-row"
-        :class="{ hidden: !isCategoryVisible(category) }"
+      <SalesTableBodyCategoryRow
+        :category="category"
+        :stores="props.stores"
+        :filtered-data="props.filteredData"
+        :visibleCategories="visibleCategories"
+        @toggleProducts="toggleProducts($event)"
+      />
+
+      <SalesTableBodyProductRow
         v-for="product in getProducts(category)"
+        :product="product"
+        :stores="props.stores"
         :key="`${category}-${product}`"
-      >
-        <td
-          class="product-item"
-          v-text="product"
-        />
-        <td
-          v-for="store in props.stores"
-          :key="store"
-        >
-          {{ getPiecesByProduct(product, store) }}
-        </td>
-      </tr>
+        :filtered-data="props.filteredData"
+        :class="{ hidden: !isCategoryVisible(category) }"
+        class="product-row"
+      />
     </template>
   </tbody>
 </template>
@@ -46,6 +30,8 @@
   import type { DataType } from '@/types'
   import { OrderEnum } from '@/enums'
   import { extractUniqueValues } from '@/utils'
+  import SalesTableBodyCategoryRow from './SalesTableBodyCategoryRow.vue'
+  import SalesTableBodyProductRow from './SalesTableBodyProductRow.vue'
 
   const visibleCategories = ref<string[]>([])
 
@@ -75,23 +61,6 @@
     }
   })
 
-  const getPiecesByCategory = (category: string, store: string): number => {
-    return (
-      props.filteredData.reduce((acc, curr) => {
-        if (curr.category === category && curr.store === store) {
-          acc += curr.pcs
-        }
-        return acc
-      }, 0) || 0
-    )
-  }
-
-  const getPiecesByProduct = (product: string, store: string): number => {
-    return (
-      props.filteredData.find((item) => item.product === product && item.store === store)?.pcs || 0
-    )
-  }
-
   const getProducts = (category: string): string[] => {
     return extractUniqueValues(
       props.filteredData.filter((item) => item.category === category),
@@ -99,15 +68,13 @@
     )
   }
 
-  const isCategoryVisible = (category: string): boolean => {
-    return visibleCategories.value.includes(category)
-  }
-
   const toggleProducts = (category: string): void => {
     visibleCategories.value = visibleCategories.value.find((item) => item === category)
       ? visibleCategories.value.filter((item) => item !== category)
       : [...visibleCategories.value, category]
   }
-</script>
 
-<style scoped></style>
+  const isCategoryVisible = (category: string): boolean => {
+    return visibleCategories.value.includes(category)
+  }
+</script>

@@ -48,6 +48,9 @@
   // Emit
   const emit = defineEmits(['loader'])
 
+  /**
+   * Fetch data from API
+   */
   const fetchData = async () => {
     try {
       const response = await axios.get('https://hiring.wdev.sk/fe-data')

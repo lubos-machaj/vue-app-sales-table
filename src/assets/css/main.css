@@ -1,9 +1,5 @@
-:root {
-  --font-color: #eeeeee;
-}
-
 html {
-  color: var(--font-color);
+  color: #eeeeee;
   font-weight: normal;
   font-family: sans-serif;
   background-color: #242424;
@@ -64,6 +60,7 @@ th {
   opacity: 0.2;
   transform: rotate(90deg);
   position: relative;
+
   &::after {
     content: '↔';
     position: absolute;
@@ -112,6 +109,7 @@ th {
   border-radius: 10%;
   border: 1px solid #8a8a8a;
   background-color: #595959;
+
   &:hover {
     background-color: #696969;
   }
@@ -142,8 +140,3 @@ th {
 .hidden {
   display: none;
 }
-
-.error-message {
-  text-align: center;
-}
-

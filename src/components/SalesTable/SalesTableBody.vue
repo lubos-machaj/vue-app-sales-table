@@ -39,7 +39,7 @@
     stores: string[]
     categories: string[]
     sortedStore: string
-    sortedStoreOrder: string
+    sortedStoreOrder: string | null
     filteredData: DataType[]
   }>()
 

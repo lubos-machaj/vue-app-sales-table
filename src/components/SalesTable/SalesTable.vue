@@ -14,10 +14,9 @@
       :sortedStoreOrder="sortedStoreOrder"
     />
   </table>
-  <p
-    v-if="!filteredData.length"
-    class="error-message"
-    v-text="'Something went wrong with the data. Please try again.'"
+  <ErrorMessage
+    v-else
+    :text="'Something went wrong with the data. Please try again.'"
   />
 </template>
 
@@ -29,6 +28,7 @@
   import { extractUniqueValues } from '@/utils'
   import SalesTableHeader from './SalesTableHeader.vue'
   import SalesTableBody from './SalesTableBody.vue'
+  import ErrorMessage from '../common/ErrorMessage.vue'
 
   // Data
   const data = ref<DataType[]>([])
@@ -59,9 +59,10 @@
       categories.value = extractUniqueValues(data.value, 'category', true)
       stores.value = extractUniqueValues(data.value, 'store', true)
       showTable.value = true
-      emit('loader', false)
     } catch (error) {
       console.error('Error:', error)
+    } finally {
+      emit('loader', false)
     }
   }
 

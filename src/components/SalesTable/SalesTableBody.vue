@@ -65,6 +65,7 @@
     return extractUniqueValues(
       props.filteredData.filter((item) => item.category === category),
       'product',
+      !props.sortedStoreOrder,
     )
   }
 

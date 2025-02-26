@@ -6,7 +6,7 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: './vue-app-sales-table/',
+  base: '/vue-app-sales-table/',
   plugins: [vue(), vueDevTools()],
   resolve: {
     alias: {
